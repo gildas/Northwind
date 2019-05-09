@@ -4,8 +4,8 @@ var Server = mongo.Server,
 	Db = mongo.Db,
 	BSON = mongo.BSONPure;
 
-var server = new Server('localhost', 27017, {auto_reconnect: true});
-db = new Db('northwind', server);
+var server = new Server(process.env.MONGODB || 'localhost', 27017, {auto_reconnect: true});
+db = new Db('Northwind', server);
 
 db.open(function(err, db){
 	if(!err){
@@ -15,7 +15,9 @@ db.open(function(err, db){
 				console.log('The customer collection does not exist');
 			}
 		});
-	}
+  } else {
+    console.warn("Failed to connecto to database: ", err)
+  }
 });
 
 exports.findById = function(req, res){
@@ -31,7 +33,19 @@ exports.findById = function(req, res){
 exports.findAll = function(req, res) {
 	console.log("Retrieving customers");
 	db.collection('customers', function(err, collection) {
+    if (err) {
+      console.warn("Failed to retrieve collection customers: ", err);
+      res.send(404);
+      return
+    }
+    console.log("Found collection customers");
 		collection.find().toArray(function(err, items) {
+      if (err) {
+        console.warn("Failed to retrieve customers: ", err);
+        res.send(404);
+        return
+      }
+      console.log("Found customers");
 			res.send(items);
 		});
 	});
